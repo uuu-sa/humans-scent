@@ -5,30 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>人間の残り香 - COMPLETE ARCHIVE</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0a0c10;
-            --text-color: #e0e0e0;
+            --bg-color: #0d0f12;
+            --text-color: #f0f0f0;
             --accent-color: #d4a373; 
+            --dim-text: rgba(240, 240, 240, 0.4);
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: "Shippori Mincho", serif;
+            font-family: 'Shippori Mincho', serif;
             margin: 0;
-            padding: 0;
+            line-height: 1.8;
             overflow-x: hidden;
         }
 
+        /* タイムラインのインジケーター */
         .time-axis {
             position: fixed;
-            right: 30px;
-            top: 10%;
-            height: 80%;
+            right: 40px;
+            top: 15%;
+            height: 70%;
             width: 1px;
-            background: rgba(212, 163, 115, 0.3);
+            background: rgba(212, 163, 115, 0.2);
             z-index: 100;
         }
 
@@ -36,37 +38,94 @@
             position: absolute;
             right: 0;
             font-size: 10px;
+            letter-spacing: 0.2em;
             color: var(--accent-color);
             white-space: nowrap;
-            padding-right: 15px;
-            transition: all 0.3s ease;
+            padding-right: 20px;
+            opacity: 0.3;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            writing-mode: vertical-rl;
         }
 
         .time-marker.active {
+            opacity: 1;
             font-weight: bold;
-            font-size: 14px;
-            text-shadow: 0 0 10px var(--accent-color);
+            transform: scale(1.1) translateX(-5px);
         }
 
-        .depth-label {
-            position: sticky;
-            top: 10%;
+        /* 背景の深度ラベル */
+        .depth-bg-label {
+            position: fixed;
+            top: 50%;
             left: 5%;
-            font-size: 12vw;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.03);
+            transform: translateY(-50%);
+            font-size: 18vw;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.02);
             pointer-events: none;
-            z-index: 0;
-            line-height: 1;
-            margin-top: 200px;
+            z-index: -1;
+            line-height: 0.8;
         }
 
+        /* 写真フレームの洗練化 */
+        .photo-container {
+            position: relative;
+            width: 100%;
+            max-width: 550px;
+            aspect-ratio: 4 / 5; 
+            overflow: hidden;
+            background: #16181d;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* これですべての写真を同じ枠に綺麗に収めます */
+            filter: grayscale(40%) contrast(95%);
+            transition: all 1.5s ease;
+        }
+
+        .photo-container:hover img {
+            filter: grayscale(0%) contrast(100%);
+            transform: scale(1.08);
+        }
+
+        /* ホバー時のストーリー表示 */
+        .story-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 15, 18, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            padding: 50px;
+            text-align: center;
+        }
+
+        .photo-container:hover .story-overlay {
+            opacity: 1;
+        }
+
+        .story-text {
+            color: var(--accent-color);
+            font-size: 1.15rem;
+            letter-spacing: 0.15em;
+            line-height: 2;
+        }
+
+        /* アイテムのアニメーション */
         .item {
             opacity: 0;
-            transform: translateY(50px);
-            transition: all 1s ease-out;
-            position: relative;
-            z-index: 10;
+            transform: translateY(80px);
+            transition: all 1.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .item.visible {
@@ -74,221 +133,133 @@
             transform: translateY(0);
         }
 
-        .photo-frame {
-            position: relative;
-            cursor: crosshair;
-            overflow: hidden;
-            border-radius: 4px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            background: #111;
+        /* 装飾的なライン */
+        .accent-line {
+            width: 40px;
+            height: 1px;
+            background: var(--accent-color);
+            margin: 20px 0;
+            opacity: 0.5;
         }
 
-        .photo-frame img {
-            transition: transform 0.8s ease, filter 0.8s ease;
-            filter: grayscale(30%);
-            width: 100%;
-            height: auto;
-        }
-
-        .photo-frame:hover img {
-            transform: scale(1.05);
-            filter: grayscale(0%);
-        }
-
-        .before-story {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 12, 16, 0.92);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            padding: 40px;
-            text-align: center;
-        }
-
-        .photo-frame:hover .before-story {
-            opacity: 1;
-        }
-
-        .story-text {
-            color: var(--accent-color);
-            font-size: 1.1rem;
-            line-height: 1.8;
-            letter-spacing: 0.05em;
-        }
     </style>
 </head>
 <body>
 
+    <div id="depth-indicator" class="depth-bg-label">DEPTH 01</div>
+
     <div class="time-axis hidden md:block">
-        <div class="time-marker" style="top: 0;" id="marker-01">Depth 01 (今〜数分前)</div>
-        <div class="time-marker" style="top: 33%;" id="marker-02">Depth 02 (数時間〜数日前)</div>
-        <div class="time-marker" style="top: 66%;" id="marker-03">Depth 03 (数ヶ月〜数年前)</div>
-        <div class="time-marker" style="bottom: 0;" id="marker-04">Depth 04 (風景への同化)</div>
+        <div class="time-marker" style="top: 0;" id="marker-01">DEPTH 01</div>
+        <div class="time-marker" style="top: 33%;" id="marker-02">DEPTH 02</div>
+        <div class="time-marker" style="top: 66%;" id="marker-03">DEPTH 03</div>
+        <div class="time-marker" style="bottom: 0;" id="marker-04">DEPTH 04</div>
     </div>
 
-    <header class="h-screen flex flex-col justify-center items-center text-center px-4">
-        <h1 class="text-5xl md:text-7xl tracking-[0.3em] text-[#d4a373] mb-8">人間の残り香</h1>
-        <p class="text-sm opacity-40 tracking-[0.5em] uppercase">Complete Collection of Presence</p>
-        <div class="mt-32 animate-bounce opacity-20 text-[10px] tracking-[0.2em]">SCROLL TO DIG INTO THE STRATA</div>
+    <header class="h-screen flex flex-col justify-center items-center">
+        <h1 class="text-4xl md:text-6xl tracking-[0.5em] text-[#d4a373] mb-6">人間の残り香</h1>
+        <div class="accent-line"></div>
+        <p class="text-[10px] opacity-40 tracking-[0.8em] uppercase">The Strata of Absence</p>
     </header>
 
-    <main class="container mx-auto px-4 pb-96">
-        
-        <div class="depth-label">DEPTH 01</div>
-        
-        <div class="item flex flex-col items-center md:items-end mb-80" data-depth="01">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347486_0.jpg" alt="Water" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Water+Drip'">
-                <div class="before-story">
+    <main class="container mx-auto px-6">
+
+        <div class="item flex flex-col items-center md:items-end mb-96" data-depth="01">
+            <div class="photo-container">
+                <img src="S__51347486_0.jpg" alt="Water" onerror="this.src='https://placehold.co/600x800/1a1c20/d4a373?text=Water'">
+                <div class="story-overlay">
                     <p class="story-text">さっきまで、誰かが使っていた。</p>
                 </div>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest text-right">01 / SECONDS AGO</p>
+            <div class="w-full max-w-[550px] mt-8 text-right">
+                <p class="text-[10px] text-zinc-500 tracking-[0.4em]">01 / SECONDS AGO</p>
+            </div>
         </div>
 
-        <div class="item flex flex-col items-center md:items-start mb-80" data-depth="01">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347489_0.jpg" alt="Bag" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Bag'">
-                <div class="before-story">
+        <div class="item flex flex-col items-center md:items-start mb-96" data-depth="01">
+            <div class="photo-container">
+                <img src="S__51347489_0.jpg" alt="Bag" onerror="this.src='https://placehold.co/600x800/1a1c20/d4a373?text=Bag'">
+                <div class="story-overlay">
                     <p class="story-text">持ち主お出かけ中</p>
                 </div>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest">01 / A FEW MINUTES AGO</p>
-        </div>
-
-        <div class="item flex flex-col items-center md:items-center mb-80" data-depth="01">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347487_0.jpg" alt="Station" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Station'">
-                <div class="before-story">
-                    <p class="story-text">誰かの列の最後尾が、まだそこに。</p>
-                </div>
+            <div class="w-full max-w-[550px] mt-8">
+                <p class="text-[10px] text-zinc-500 tracking-[0.4em]">01 / A FEW MINUTES AGO</p>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest">01 / CONSTANT PRESENCE</p>
         </div>
 
-        <div class="item flex flex-col items-center md:items-end mb-80" data-depth="01">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347480_0.jpg" alt="Bicycles" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Bicycles'">
-                <div class="before-story">
-                    <p class="story-text">夜の公園、持ち主はすぐそこ</p>
-                </div>
-            </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest text-right">01 / TONIGHT</p>
-        </div>
-
-        <div class="depth-label">DEPTH 02</div>
-
-        <div class="item flex flex-col items-center md:items-start mb-80" data-depth="02">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347483_0.jpg" alt="Cigarette" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Cigarette'">
-                <div class="before-story">
+        <div class="item flex flex-col items-center md:items-center mb-96" data-depth="02">
+            <div class="photo-container">
+                <img src="S__51347483_0.jpg" alt="Cigarette" onerror="this.src='https://placehold.co/600x800/1a1c20/d4a373?text=Cigarette'">
+                <div class="story-overlay">
                     <p class="story-text">吐き出された煙の跡</p>
                 </div>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest">02 / A FEW HOURS AGO</p>
+            <div class="w-full max-w-[550px] mt-8 text-center">
+                <p class="text-[10px] text-zinc-500 tracking-[0.4em]">02 / A FEW HOURS AGO</p>
+            </div>
         </div>
 
-        <div class="item flex flex-col items-center md:items-end mb-80" data-depth="02">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347479.jpg" alt="Garbage" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Garbage'">
-                <div class="before-story">
+        <div class="item flex flex-col items-center md:items-start mb-96" data-depth="02">
+            <div class="photo-container">
+                <img src="S__51347479.jpg" alt="Garbage" onerror="this.src='https://placehold.co/600x800/1a1c20/d4a373?text=Garbage'">
+                <div class="story-overlay">
                     <p class="story-text">朝の生活の、重たい集積</p>
                 </div>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest text-right">02 / THIS MORNING</p>
+            <div class="w-full max-w-[550px] mt-8">
+                <p class="text-[10px] text-zinc-500 tracking-[0.4em]">02 / THIS MORNING</p>
+            </div>
         </div>
 
-        <div class="item flex flex-col items-center md:items-start mb-80" data-depth="02">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347481_0.jpg" alt="Parking" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Parking'">
-                <div class="before-story">
-                    <p class="story-text">空車を待つ誰かの、焦燥と時間</p>
+        <div class="item flex flex-col items-center md:items-end mb-96" data-depth="03">
+            <div class="photo-container">
+                <img src="S__51347494_0.jpg" alt="Shoes" onerror="this.src='https://placehold.co/600x800/1a1c20/d4a373?text=Shoes'">
+                <div class="story-overlay">
+                    <p class="story-text">走っているうちに、片方だけ置いていかれた。</p>
                 </div>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest">02 / TODAY</p>
-        </div>
-
-        <div class="item flex flex-col items-center md:items-end mb-80" data-depth="02">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347492_0.jpg" alt="Umbrella" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Umbrella'">
-                <div class="before-story">
-                    <p class="story-text">本人は気づかない
-                </div>
+            <div class="w-full max-w-[550px] mt-8 text-right">
+                <p class="text-[10px] text-zinc-500 tracking-[0.4em]">03 / A FEW MONTHS AGO</p>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest text-right">02 / YESTERDAY</p>
         </div>
 
-        <div class="depth-label">DEPTH 03</div>
-
-        <div class="item flex flex-col items-center md:items-start mb-80" data-depth="03">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347482_0.jpg" alt="Toothbrush" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Toothbrush'">
-                <div class="before-story">
-                    <p class="story-text">もう磨かれることのない毛先</p>
-                </div>
-            </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest">03 / A FEW WEEKS AGO</p>
-        </div>
-
-        <div class="item flex flex-col items-center md:items-end mb-80" data-depth="03">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347494_0.jpg" alt="Shoes" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Shoes'">
-                <div class="before-story">
-                    <p class="story-text">意味のある置いて行かれ方</p>
-                </div>
-            </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest text-right">03 / A FEW MONTHS AGO</p>
-        </div>
-
-        <div class="depth-label">DEPTH 04</div>
-
-        <div class="item flex flex-col items-center md:items-start mb-80" data-depth="04">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347485_0.jpg" alt="Button" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Button'">
-                <div class="before-story">
+        <div class="item flex flex-col items-center md:items-start mb-96" data-depth="04">
+            <div class="photo-container">
+                <img src="S__51347485_0.jpg" alt="Button" onerror="this.src='https://placehold.co/600x800/1a1c20/d4a373?text=Button'">
+                <div class="story-overlay">
                     <p class="story-text">数万回の指先の記憶、すり減った樹脂</p>
                 </div>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest">04 / YEARS OF ACCUMULATION</p>
-        </div>
-
-        <div class="item flex flex-col items-center md:items-end mb-80" data-depth="04">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347484_0.jpg" alt="Graffiti" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Graffiti'">
-                <div class="before-story">
-                    <p class="story-text">消えない落書き、消えた誰か。</p>
-                </div>
+            <div class="w-full max-w-[550px] mt-8">
+                <p class="text-[10px] text-zinc-500 tracking-[0.4em]">04 / YEARS OF ACCUMULATION</p>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest text-right">04 / ETERNAL TRACE</p>
         </div>
 
-        <div class="item flex flex-col items-center md:items-center mb-80" data-depth="04">
-            <div class="photo-frame w-full max-w-lg">
-                <img src="S__51347490_0.jpg" alt="Boot" onerror="this.src='https://placehold.co/600x800/222/d4a373?text=Boot'">
-                <div class="before-story">
+        <div class="item flex flex-col items-center md:items-center mb-96" data-depth="04">
+            <div class="photo-container">
+                <img src="S__51347490_0.jpg" alt="Boot" onerror="this.src='https://placehold.co/600x800/1a1c20/d4a373?text=Boot'">
+                <div class="story-overlay">
                     <p class="story-text">雨が止んだらただのビニール</p>
                 </div>
             </div>
-            <p class="mt-4 text-[10px] opacity-40 tracking-widest">04 / FOSSILIZED PRESENCE</p>
+            <div class="w-full max-w-[550px] mt-8 text-center">
+                <p class="text-[10px] text-zinc-500 tracking-[0.4em]">04 / FOSSILIZED PRESENCE</p>
+            </div>
         </div>
 
     </main>
 
-    <footer class="h-screen flex flex-col justify-center items-center opacity-30 text-[10px] tracking-[0.4em] text-center px-4">
-        <p>形跡は地層となり、静かに沈殿していく。</p>
-        <p class="mt-8">HUMAN SCENT ARCHIVE &copy; SACHI</p>
+    <footer class="h-screen flex flex-col items-center justify-center text-center opacity-20 px-6">
+        <p class="text-xs tracking-[0.6em] mb-4">形跡は地層となり、静かに沈殿していく。</p>
+        <p class="text-[8px] tracking-[0.8em] uppercase">Human Scent Archive &copy; Sachi</p>
     </footer>
 
     <script>
         const observerOptions = {
-            threshold: 0.2
+            threshold: 0.3
         };
+
+        const depthIndicator = document.getElementById('depth-indicator');
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -297,6 +268,10 @@
                     
                     const depth = entry.target.getAttribute('data-depth');
                     if (depth) {
+                        // 背景のDEPTHラベルを更新
+                        depthIndicator.innerText = `DEPTH ${depth}`;
+                        
+                        // タイムラインのインジケーターを更新
                         document.querySelectorAll('.time-marker').forEach(m => m.classList.remove('active'));
                         const marker = document.getElementById(`marker-${depth}`);
                         if (marker) marker.classList.add('active');
